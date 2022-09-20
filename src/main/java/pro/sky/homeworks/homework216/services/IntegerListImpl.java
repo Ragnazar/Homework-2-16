@@ -3,28 +3,31 @@ package pro.sky.homeworks.homework216.services;
 import java.util.Arrays;
 import java.util.Objects;
 
+import org.springframework.stereotype.Service;
 import pro.sky.homeworks.homework216.exceptions.ElementAlreadyExistsException;
 import pro.sky.homeworks.homework216.exceptions.ElementNotFoundException;
 import pro.sky.homeworks.homework216.exceptions.NullParameterException;
 import pro.sky.homeworks.homework216.exceptions.OutOfBoundsException;
 
-public class IntegerListImpl implements IntegerList {
-    private Integer[] list = {2, 5, 7, 3, 10, 14, 25, 130, 11, 27};
+@Service
+public class IntegerListImpl implements IntegerListService {
+    public Integer[] list = new Integer[10];
 
     @Override
     public Integer add(Integer item) {
         int length = list.length;
-        Integer[] result;
-        if (list[0] == null) {
-            result = new Integer[length];
-            result[length - 1] = item;
-        } else {
-            result = new Integer[length + 1];
-            System.arraycopy(list, 0, result, 0, length);
-            result[length] = item;
+        int count = 0;
+        for (int i = 0; i < length; i++) {
+            if (list[i] == null) {
+                list[i] = item;
+                count = i;
+                break;
+            }
         }
-        list = result;
-        return list[length - 1];
+        if (count == length - 1) {
+            grow();
+        }
+        return item;
     }
 
     @Override
@@ -52,25 +55,20 @@ public class IntegerListImpl implements IntegerList {
     @Override
     public Integer remove(Integer item) {
         int length = list.length;
-        Integer[] result = new Integer[length - 1];
         for (int i = 0; i < length; i++) {
             if (Objects.equals(list[i], item)) {
                 list[i] = null;
-            } else if (i == list.length - 1) {
+                break;
+            } else if (!Objects.equals(list[length - 1], item)) {
                 throw new ElementNotFoundException("Элемент отсутсвует");
             }
-            if (list[i] != null) {
-                result[i] = list[i];
-            }
         }
-        list = result;
         return item;
     }
 
     @Override
     public Integer remove(int index) {
         int length = list.length;
-        Integer[] result = new Integer[length - 1];
         if (index > length || list[0] == null) {
             throw new ElementNotFoundException("Элемент отсутсвует");
         }
@@ -80,20 +78,13 @@ public class IntegerListImpl implements IntegerList {
                 out = list[i];
                 list[i] = null;
             }
-            if (list[i] != null) {
-                result[i] = list[i];
-            }
         }
-        list = result;
         return out;
     }
 
     @Override
     public boolean contains(Integer item) {
-        if (binarySearch(list, item) != -1) {
-            return true;
-        }
-        return false;
+        return binarySearch(item) != -1;
     }
 
     @Override
@@ -130,6 +121,9 @@ public class IntegerListImpl implements IntegerList {
         if (otherList == null) {
             throw new NullParameterException("Параметр не определен");
         }
+        if (list.length != otherList.length) {
+            return false;
+        }
         for (int i = 0; i < list.length; i++) {
             if (Objects.equals(list[i], otherList[i])) {
                 isEqual = true;
@@ -140,7 +134,13 @@ public class IntegerListImpl implements IntegerList {
 
     @Override
     public int size() {
-        return list.length;
+        int count = 0;
+        for (Integer integer : list) {
+            if (integer != null) {
+                count++;
+            }
+        }
+        return count;
     }
 
     @Override
@@ -159,72 +159,72 @@ public class IntegerListImpl implements IntegerList {
         Arrays.fill(list, null);
     }
 
+    @Override
+    public void mergeSort(Integer[] list) {
+        if (list.length < 2) {
+            return;
+        }
+        int mid = list.length / 2;
+        Integer[] left = new Integer[mid];
+        Integer[] right = new Integer[list.length - mid];
 
-    private static void swap(Integer[] list, int idx1, int idx2) {
-        int tmp = list[idx1];
-        list[idx1] = list[idx2];
-        list[idx2] = tmp;
+        System.arraycopy(list, 0, left, 0, left.length);
+        System.arraycopy(list, mid, right, 0, right.length);
+
+        mergeSort(left);
+        mergeSort(right);
+
+        merge(list, left, right);
     }
 
-
-    public void swapSort(Integer[] list) {
-        boolean needIter = true;
-        while (needIter) {
-            needIter = false;
-            for (int i = 1; i < list.length; i++) {
-                if (list[i] < list[i - 1]) {
-                    swap(list, i, i - 1);
-                    needIter = true;
-                }
+    private void merge(Integer[] list, Integer[] left, Integer[] right) {
+        int mainP = 0;
+        int leftP = 0;
+        int rightP = 0;
+        while (leftP < left.length && rightP < right.length) {
+            if (left[leftP] <= right[rightP]) {
+                list[mainP++] = left[leftP++];
+            } else {
+                list[mainP++] = right[rightP++];
             }
+        }
+        while (leftP < left.length) {
+            list[mainP++] = left[leftP++];
+        }
+        while (rightP < right.length) {
+            list[mainP++] = right[rightP++];
         }
     }
 
     @Override
-    public void selectionSort(Integer[] list) {
-        for (int left = 0; left < list.length; left++) {
-            int minIdx = left;
-            for (int i = left; i < list.length; i++) {
-                if (list[i] < list[minIdx]) {
-                    minIdx = i;
-                }
-            }
-            swap(list, left, minIdx);
-        }
-    }
-
-    @Override
-    public void insertionSort(Integer[] list) {
-        for (int left = 0; left < list.length; left++) {
-            Integer value = list[left];
-            int i = left - 1;
-            for (; i >= 0; i--) {
-                if (value < list[i]) {
-                    list[i + 1] = list[i];
-                } else {
-                    break;
-                }
-            }
-            list[i + 1] = value;
-        }
-    }
-
-    @Override
-    public int binarySearch(Integer[] list, Integer item) {
+    public int binarySearch(Integer item) {
+        int index = Integer.MAX_VALUE;
         int first = 0;
         int last = list.length - 1;
+        mergeSort(list);
 
         while (first <= last) {
-            int middle = (first + last) / 2;
-            if (Objects.equals(list[middle], item)) {
-                return middle;
-            } else if (list[middle] < item) {
-                first = middle + 1;
-            } else if (list[middle] > item) {
-                last = middle - 1;
+            int mid = (first + last) / 2;
+            if (list[mid] < item) {
+                first = mid + 1;
+            } else if (list[mid] > item) {
+                last = mid - 1;
+            } else if (Objects.equals(list[mid], item)) {
+               index = mid;
+               break;
             }
         }
-        return -1;
+        return index;
+    }
+
+    private void grow() {
+        int length = list.length;
+        list = Arrays.copyOf(list, length * 3 / 2);
+        for (int i = length; i < list.length; i++) {
+            if (list[i] == 0) {
+                list[i] = null;
+            }
+        }
     }
 }
 

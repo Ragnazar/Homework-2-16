@@ -1,6 +1,6 @@
 package pro.sky.homeworks.homework216.services;
 
-public interface IntegerList {
+public interface IntegerListService {
     Integer add(Integer item);
 
     Integer add(int index, Integer item);
@@ -29,11 +29,8 @@ public interface IntegerList {
 
     void clear();
 
-     void swapSort(Integer[] list);
 
-    void selectionSort(Integer[] list);
+    void mergeSort(Integer[] list);
 
-    void insertionSort(Integer[] list);
-
-    int binarySearch(Integer[] list, Integer item);
+    int binarySearch(Integer item);
 }

@@ -1,39 +1,46 @@
 package pro.sky.homeworks.homework216;
 
 import org.junit.jupiter.api.Test;
-import pro.sky.homeworks.homework216.services.IntegerList;
+import org.springframework.boot.test.context.SpringBootTest;
+import pro.sky.homeworks.homework216.exceptions.ElementNotFoundException;
+import pro.sky.homeworks.homework216.services.IntegerListService;
 import pro.sky.homeworks.homework216.services.IntegerListImpl;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.*;
-
+@SpringBootTest
 class IntegerListImplTest {
     final Integer item = 100000;
     final int index = 0;
     final int minus = -1;
-    IntegerList integerList = new IntegerListImpl();
+    IntegerListService integerList = new IntegerListImpl();
 
     @Test
-    void shouldAddStringToArray() {
+    void shouldAddItemToArray() {
         assertEquals(integerList.add(item), item);
     }
 
     @Test
-    void shouldAddStringToArrayByIndex() {
+    void shouldAddItemToArrayByIndex() {
         assertEquals(integerList.add(index, item), item);
     }
 
-
     @Test
-    void shouldSetStringToArray() {
+    void shouldSetItemToArray() {
         assertEquals(integerList.set(index, item), item);
     }
-
 
     @Test
     void shouldRemoveItemFromArray() {
         integerList.add(item);
         assertEquals(integerList.remove(item), item);
-
+    }
+    @Test
+    void shouldThrowNotFoundExceptionWhenRemoveItemFromArray() {
+        Throwable thrown = catchThrowable(() -> integerList.remove(item));
+        assertThat(thrown).isInstanceOf(ElementNotFoundException.class);
+        assertThat(thrown.getMessage()).isNotBlank();
     }
 
 
@@ -42,17 +49,16 @@ class IntegerListImplTest {
         integerList.add(item);
         assertEquals(integerList.remove(index), item);
     }
-
-
+    @Test
+    void shouldThrowOutOfBoundsExceptionWhenRemoveItemFromArrayByIndex() {
+        Throwable thrown = catchThrowable(() -> integerList.remove(integerList.size()));
+        assertThat(thrown).isInstanceOf(ElementNotFoundException.class);
+        assertThat(thrown.getMessage()).isNotBlank();
+    }
     @Test
     void shouldFindItemInArray() {
         integerList.add(item);
         assertTrue(integerList.contains(item));
-    }
-
-    @Test
-    void shouldReturnFalseIfCantFindItem() {
-        assertFalse(integerList.contains(item));
     }
 
     @Test
@@ -110,28 +116,6 @@ class IntegerListImplTest {
     void shouldCheckEquality() {
         integerList.add(item);
         Integer[] check = {item};
-        assertTrue(integerList.equals(check));
-    }
-
-    @Test
-    void swapSort() {
-        integerList.swapSort(generateRandomArray());
-
-    }
-
-    @Test
-    void binarySearch() {
-        Integer[] arr = generateRandomArray();
-        integerList.swapSort(arr);
-        integerList.binarySearch(arr, item);
-    }
-
-    public static Integer[] generateRandomArray() {
-        java.util.Random random = new java.util.Random();
-        Integer[] arr = new Integer[1000];
-        for (int i = 0; i < arr.length; i++) {
-            arr[i] = random.nextInt(100_000) + 100_000;
-        }
-        return arr;
+        assertFalse(integerList.equals(check));
     }
 }
